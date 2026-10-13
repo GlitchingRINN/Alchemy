@@ -53,7 +53,8 @@ jobs:
           ln -s scrobblenaut Scrobblenaut
           git clone --depth 1 https://github.com/SedlarDavid/figma_squircle figma_squircle
           git clone --depth 1 https://github.com/mufassalhussain/open_filex open_filex
-          git clone --depth 1 https://github.com/PetitPrinc3/liquid_progress_indicator_v2 liquid_progress_indicator_v2
+          dart pub unpack liquid_progress_indicator_v2
+          mv liquid_progress_indicator_v2-* liquid_progress_indicator_v2
           for d in custom_navigator external_path marquee move_to_background scrobblenaut figma_squircle open_filex liquid_progress_indicator_v2; do
             (cd "$d" && flutter pub get && dart run build_runner build --delete-conflicting-outputs) || true
           done
