@@ -1,44 +1,53 @@
-name: Build Android APK
-
-on:
-  workflow_dispatch:
+name: Build APK
+on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository with submodules
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
 
-      - name: Initialize and update submodules explicitly
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.32.2
+          channel: stable
+
+      - name: Create .env with empty values
         run: |
-          git submodule sync
-          git submodule update --init --recursive
+          cat > lib/.env << 'EOF'
+          deezerGatewayAPI = '';
+          deezerMobileKey = '';
+          lastFmApiKey = '';
+          lastFmApiSecret = '';
+          acrcloudHost = '';
+          acrcloudSongApiKey = '';
+          acrcloudSongApiSecret = '';
+          acrcloudHumsApiKey = '';
+          acrcloudHumsApiSecret = '';
+          EOF
 
-      - name: Set up Java JDK
-        uses: actions/setup-java@v4
+      - name: Create signing key
+        run: |
+          keytool -genkey -v -keystore android/app/keys.jks -keyalg RSA -keysize 2048 -validity 10000 -alias mykey -storepass buildpass123 -keypass buildpass123 -dname "CN=Alchemy"
+          cat > android/key.properties << 'EOF'
+          storePassword=buildpass123
+          keyPassword=buildpass123
+          keyAlias=mykey
+          storeFile=keys.jks
+          EOF
+
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter build apk --split-per-abi --release
+
+      - uses: actions/upload-artifact@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Set up Flutter SDK
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: 'any'
-          channel: 'stable'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Alchemy-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: alchemy-apks
+          path: build/app/outputs/flutter-apk/*.apk
