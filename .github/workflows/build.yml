@@ -43,6 +43,21 @@ jobs:
           storeFile=keys.jks
           EOF
 
+      - name: Clone custom packages
+        run: |
+          git clone --depth 1 https://github.com/DJDoubleD/custom_navigator custom_navigator
+          git clone --depth 1 https://github.com/DJDoubleD/external_path external_path
+          git clone --depth 1 https://github.com/DJDoubleD/marquee marquee
+          git clone --depth 1 https://github.com/DJDoubleD/move_to_background move_to_background
+          git clone --depth 1 https://github.com/DJDoubleD/Scrobblenaut scrobblenaut
+          ln -s scrobblenaut Scrobblenaut
+          git clone --depth 1 https://github.com/SedlarDavid/figma_squircle figma_squircle
+          git clone --depth 1 https://github.com/mufassalhussain/open_filex open_filex
+          git clone --depth 1 https://github.com/PetitPrinc3/liquid_progress_indicator_v2 liquid_progress_indicator_v2
+          for d in custom_navigator external_path marquee move_to_background scrobblenaut figma_squircle open_filex liquid_progress_indicator_v2; do
+            (cd "$d" && flutter pub get && dart run build_runner build --delete-conflicting-outputs) || true
+          done
+
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter build apk --split-per-abi --release
